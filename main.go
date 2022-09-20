@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -32,8 +33,8 @@ type onePassOutput struct {
 	Fields []onePassSecret `json:"fields"`
 }
 
-//! Don't trust env or os calls to find home path
-//* Change this path for yours
+// ! Don't trust env or os calls to find home path
+// * Change this path for yours
 const configPath = "/Users/ahmet/.onepassenv.json"
 
 func main() {
@@ -41,27 +42,27 @@ func main() {
 	// config file control
 	info, err := os.Stat(configPath)
 	if err != nil {
-		log.Printf("stat: %v", err)
+		log.Printf("stat: %s", err)
 		os.Exit(1)
 	}
 
 	if !(info.Mode().String() == "-rw----r--" || info.Mode().String() == "-rw-r--r--") {
 		log.Printf(`error: file is too open
-sudo chown root '%v'
-sudo chmod u+w '%v'
-sudo chmod a+r '%v'`, configPath, configPath, configPath)
+sudo chown root '%s'
+sudo chmod u+w '%s'
+sudo chmod a+r '%s'`, configPath, configPath, configPath)
 		os.Exit(1)
 	}
 
 	jsonFile, err := os.Open(configPath)
 	if err != nil {
-		log.Printf("file open: %v", err)
+		log.Printf("file open: %s", err)
 		os.Exit(1)
 	}
 
 	byteValue, err := ioutil.ReadAll(jsonFile)
 	if err != nil {
-		log.Printf("io read: %v", err)
+		log.Printf("io read: %s", err)
 		os.Exit(1)
 	}
 
@@ -82,7 +83,7 @@ sudo chmod a+r '%v'`, configPath, configPath, configPath)
 		log.Fatalf("look path: %s", err)
 	}
 	if !(contains(config.AllowedBins, onepenvBin)) {
-		log.Fatalf("Binnary '%v' is not in allowedBins", onepenvBin)
+		log.Fatalf("Binary '%s' is not in allowedBins", onepenvBin)
 	}
 
 	currentProfile, err := getProfile(config.Profiles, onepenv)
@@ -90,14 +91,23 @@ sudo chmod a+r '%v'`, configPath, configPath, configPath)
 		log.Fatalf("profile Error %s", err)
 	}
 
-	// Execute onepass to get password
+	// Execute op to get password
 	onePassword := exec.Command(config.OpPath, "item", "get", onepenv, "--format", "json")
-	onePasswordOut, err := onePassword.Output()
+
+	var onePasswordOut bytes.Buffer
+	var onePasswordErr bytes.Buffer
+
+	onePassword.Stdout = &onePasswordOut
+	onePassword.Stderr = &onePasswordErr
+
+	//onePasswordOut, err := onePassword.Output()
+	err = onePassword.Run()
 	if err != nil {
-		log.Fatalf("onePassword Error %s", err)
+		log.Fatalf("onePassword Error %s, %s", err, onePasswordErr)
 	}
 	var secrets onePassOutput
-	json.Unmarshal(onePasswordOut, &secrets)
+
+	json.Unmarshal(onePasswordOut.Bytes(), &secrets)
 
 	for _, element := range secrets.Fields {
 		if contains(currentProfile.Variables, element.Label) {
@@ -109,7 +119,7 @@ sudo chmod a+r '%v'`, configPath, configPath, configPath)
 	executeArgs[0] = onepenvBin
 	err = syscall.Exec(onepenvBin, executeArgs, os.Environ())
 	if err != nil {
-		log.Fatalf("proccess execute failed for '%v': %v", onepenvBin, err)
+		log.Fatalf("process execute failed for '%s': %s", onepenvBin, err)
 	}
 }
 

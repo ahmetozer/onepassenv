@@ -1,0 +1,18 @@
+{
+    "opPath": "/usr/local/bin/op",
+    "profiles": [
+      {
+        "profileName": "aws-dev",
+        "variables": ["ENVIRONMENT","CDK_DEFAULT_ACCOUNT","AWS_ACCESS_KEY_ID","AWS_SECRET_ACCESS_KEY","AWS_DEFAULT_REGION"]
+      },
+      {
+        "profileName": "aws-prod",
+        "variables": ["AWS_ACCESS_KEY_ID","AWS_SECRET_ACCESS_KEY","AWS_DEFAULT_REGION"]
+      }
+    ],
+    "allowedbins":[
+      "/opt/homebrew/bin/aws",
+      "/opt/homebrew/bin/cdk"
+    ]
+  }
+  
