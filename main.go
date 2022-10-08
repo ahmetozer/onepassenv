@@ -67,7 +67,7 @@ sudo chmod a+r '%s'`, configPath, configPath, configPath)
 	}
 
 	var config config
-	json.Unmarshal(byteValue, &config)
+	_ = json.Unmarshal(byteValue, &config)
 	onepenv := os.Getenv("onepenv")
 	if onepenv == "" {
 		log.Fatalf("environment variable 'onepenv' is empty")
@@ -107,11 +107,14 @@ sudo chmod a+r '%s'`, configPath, configPath, configPath)
 	}
 	var secrets onePassOutput
 
-	json.Unmarshal(onePasswordOut.Bytes(), &secrets)
+	err = json.NewEncoder(&onePasswordOut).Encode(&secrets)
+	if err != nil {
+		log.Fatalf("josn encode failed: %s", err)
+	}
 
 	for _, element := range secrets.Fields {
 		if contains(currentProfile.Variables, element.Label) {
-			os.Setenv(element.Label, element.Value)
+			_ = os.Setenv(element.Label, element.Value)
 		}
 	}
 
