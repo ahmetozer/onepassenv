@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -60,7 +60,7 @@ sudo chmod a+r '%s'`, configPath, configPath, configPath)
 		os.Exit(1)
 	}
 
-	byteValue, err := ioutil.ReadAll(jsonFile)
+	byteValue, err := io.ReadAll(jsonFile)
 	if err != nil {
 		log.Printf("io read: %s", err)
 		os.Exit(1)
@@ -74,7 +74,7 @@ sudo chmod a+r '%s'`, configPath, configPath, configPath)
 	}
 
 	onepenvBin := os.Getenv("onepenvbin")
-	if onepenv == "" {
+	if onepenvBin == "" {
 		log.Fatalf("environment variable 'onepenvbin' is empty")
 	}
 
@@ -109,7 +109,7 @@ sudo chmod a+r '%s'`, configPath, configPath, configPath)
 
 	err = json.NewEncoder(&onePasswordOut).Encode(&secrets)
 	if err != nil {
-		log.Fatalf("josn encode failed: %s", err)
+		log.Fatalf("json encode failed: %s", err)
 	}
 
 	for _, element := range secrets.Fields {
